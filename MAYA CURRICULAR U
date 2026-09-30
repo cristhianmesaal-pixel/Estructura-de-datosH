@@ -1,0 +1,221 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+
+using namespace std;
+
+struct Materia {
+    string codigo;
+    string nombre;
+    int creditos;
+    int semestre;
+    string prerrequisito;
+};
+
+const int TOTAL_MATERIAS = 10;
+
+Materia malla[TOTAL_MATERIAS] = {
+    {"MAT101", "Calculo I", 3, 1, "Ninguno"},
+    {"PRO101", "Estructura de datos", 3, 1, "Ninguno"},
+    {"ING101", "Ingles I", 2, 1, "Ninguno"},
+    {"MAT102", "Calculo II", 3, 2, "MAT101"},
+    {"PRO102", "Redes y telecomunicaciones", 3, 2, "PRO101"},
+    {"FIS101", "Fisica I", 3, 2, "MAT101"},
+    {"ING102", "Ingles II", 2, 2, "ING101"},
+    {"BD101", "Bases de Datos", 3, 3, "PRO102"},
+    {"MAT201", "Calculo III", 3, 3, "MAT102"},
+    {"IS101", "Ingenieria de Software", 3, 4, "BD101"}
+};
+
+bool estaAprobada(string codigo, vector<string> aprobadas) {
+    for (int i = 0; i < aprobadas.size(); i++) {
+        if (aprobadas[i] == codigo) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int buscarMateria(string codigo) {
+    for (int i = 0; i < TOTAL_MATERIAS; i++) {
+        if (malla[i].codigo == codigo) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void mostrarMalla() {
+    cout << "\n--- MALLA CURRICULAR ---\n";
+
+    for (int i = 0; i < TOTAL_MATERIAS; i++) {
+        cout << malla[i].codigo << " - "
+             << malla[i].nombre
+             << " | Creditos: " << malla[i].creditos
+             << " | Semestre: " << malla[i].semestre
+             << " | Prerrequisito: " << malla[i].prerrequisito
+             << endl;
+    }
+}
+
+void registrarAprobadas(vector<string>& aprobadas) {
+    int cantidad;
+    string codigo;
+
+    cout << "\nCuantas materias aprobadas desea registrar? ";
+    cin >> cantidad;
+
+    for (int i = 0; i < cantidad; i++) {
+        cout << "Ingrese el codigo de la materia: ";
+        cin >> codigo;
+
+        int posicion = buscarMateria(codigo);
+
+        if (posicion == -1) {
+            cout << "La materia no existe.\n";
+        } else if (estaAprobada(codigo, aprobadas)) {
+            cout << "La materia ya esta registrada como aprobada.\n";
+        } else {
+            aprobadas.push_back(codigo);
+            cout << "Materia registrada correctamente.\n";
+        }
+    }
+}
+
+void mostrarDisponibles(vector<string> aprobadas) {
+    cout << "\n--- MATERIAS DISPONIBLES PARA MATRICULA ---\n";
+
+    bool hayDisponibles = false;
+
+    for (int i = 0; i < TOTAL_MATERIAS; i++) {
+        bool aprobada = estaAprobada(malla[i].codigo, aprobadas);
+
+        bool cumplePrerequisito =
+            malla[i].prerrequisito == "Ninguno" ||
+            estaAprobada(malla[i].prerrequisito, aprobadas);
+
+        if (!aprobada && cumplePrerequisito) {
+            cout << malla[i].codigo << " - "
+                 << malla[i].nombre
+                 << " (" << malla[i].creditos
+                 << " creditos)\n";
+
+            hayDisponibles = true;
+        }
+    }
+
+    if (!hayDisponibles) {
+        cout << "No hay materias disponibles.\n";
+    }
+}
+
+void mostrarBloqueadas(vector<string> aprobadas) {
+    cout << "\n--- MATERIAS BLOQUEADAS ---\n";
+
+    bool hayBloqueadas = false;
+
+    for (int i = 0; i < TOTAL_MATERIAS; i++) {
+        bool aprobada = estaAprobada(malla[i].codigo, aprobadas);
+
+        bool faltaPrerequisito =
+            malla[i].prerrequisito != "Ninguno" &&
+            !estaAprobada(malla[i].prerrequisito, aprobadas);
+
+        if (!aprobada && faltaPrerequisito) {
+            cout << malla[i].codigo << " - "
+                 << malla[i].nombre
+                 << " | Falta aprobar: "
+                 << malla[i].prerrequisito
+                 << endl;
+
+            hayBloqueadas = true;
+        }
+    }
+
+    if (!hayBloqueadas) {
+        cout << "No hay materias bloqueadas.\n";
+    }
+}
+
+void mostrarProgreso(vector<string> aprobadas) {
+    int creditosTotales = 0;
+    int creditosAprobados = 0;
+
+    for (int i = 0; i < TOTAL_MATERIAS; i++) {
+        creditosTotales += malla[i].creditos;
+
+        if (estaAprobada(malla[i].codigo, aprobadas)) {
+            creditosAprobados += malla[i].creditos;
+        }
+    }
+
+    double porcentaje =
+        (static_cast<double>(aprobadas.size()) / TOTAL_MATERIAS) * 100;
+
+    cout << "\n--- PROGRESO ACADEMICO ---\n";
+    cout << "Materias aprobadas: " << aprobadas.size() << endl;
+    cout << "Materias pendientes: "
+         << TOTAL_MATERIAS - aprobadas.size() << endl;
+    cout << "Creditos aprobados: " << creditosAprobados << endl;
+    cout << "Creditos pendientes: "
+         << creditosTotales - creditosAprobados << endl;
+
+    cout << fixed << setprecision(1);
+    cout << "Porcentaje de avance: "
+         << porcentaje << "%\n";
+}
+
+int main() {
+    vector<string> aprobadas;
+    int opcion;
+
+    do {
+        cout << "\n=================================\n";
+        cout << " PLANIFICADOR ACADEMICO\n";
+        cout << "=================================\n";
+        cout << "1. Ver malla curricular\n";
+        cout << "2. Registrar materias aprobadas\n";
+        cout << "3. Ver materias disponibles\n";
+        cout << "4. Ver materias bloqueadas\n";
+        cout << "5. Ver progreso academico\n";
+        cout << "0. Salir\n";
+        cout << "Seleccione una opcion: ";
+
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                mostrarMalla();
+                break;
+
+            case 2:
+                registrarAprobadas(aprobadas);
+                break;
+
+            case 3:
+                mostrarDisponibles(aprobadas);
+                break;
+
+            case 4:
+                mostrarBloqueadas(aprobadas);
+                break;
+
+            case 5:
+                mostrarProgreso(aprobadas);
+                break;
+
+            case 0:
+                cout << "\nPrograma finalizado.\n";
+                break;
+
+            default:
+                cout << "\nOpcion no valida.\n";
+        }
+
+    } while (opcion != 0);
+
+    return 0;
+}
